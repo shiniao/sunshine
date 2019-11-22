@@ -1,5 +1,6 @@
 module.exports = {
     lintOnSave: false,
+    publicPath: process.env.NODE_ENV === 'production' ? './' : '/',
     devServer: {
         proxy: {
             // * 将后端地址映射到/api
