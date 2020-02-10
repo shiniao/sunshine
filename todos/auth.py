@@ -8,9 +8,11 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 
-# 签发token
+# sign the token
 @api_view(['POST'])
 def sign(request):
+    """sign: sign the token string"""
+    
     # 获取用户信息
     if request.method == 'POST':
         data = request.data
@@ -36,19 +38,22 @@ def sign(request):
 
 # 解析token中的username
 def parser(request):
-
+    """parser the token , get the username"""
+    
+    # get the auth information
     auth = request.headers.get('Authorization')
     auth = auth.split()
-    # 用户通过API获取数据验证流程
+
     if auth[0] == 'Bearer':
         try:
+            # decode the jwt information, get the username char
             data = jwt.decode(auth[1], settings.SECRET_KEY, algorithms=['HS256'])
             username = data.get('username')
-        except Exception as e:
+        except Exception:
             return None
 
         try:
-            # 获取token中的username
+            # get the db user
             user = User.objects.get(username=username)
         except User.DoesNotExist:
             return None
