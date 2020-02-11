@@ -35,7 +35,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',  # sessions
     'django.contrib.messages',  # 消息框架
     'django.contrib.staticfiles',
-    'rest_framework',
     'todos.apps.TodosConfig'
 ]
 
@@ -43,7 +42,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -101,7 +100,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'en-US'
 
 TIME_ZONE = 'Asia/Shanghai'
 
@@ -115,31 +114,5 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATIC_URL = '/static/'
-
-REST_FRAMEWORK = {
-    'DEFAULT_PAGINATION_CLASS': (
-        'rest_framework.pagination.PageNumberPagination',
-    ),
-    'PAGE_SIZE': 5,
-
-    # 基本权限要求用户登录
-    'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
-    ),
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        # 'rest_framework.authentication.SessionAuthentication',
-        # 'rest_framework.authentication.BasicAuthentication',
-        'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
-        # 'rest_framework.authentication.TokenAuthentication',
-    ),
-}
-
-JWT_AUTH = {
-    # 定义与令牌一起发送的Authorization标头值前缀
-    'JWT_AUTH_HEADER_PREFIX': 'Bearer',
-    'JWT_AUTH_COOKIE': None,
-    # 过期时间：一天
-    'JWT_EXPIRATION_DELTA': datetime.timedelta(hours=24),
-}
 
 APPEND_SLASH = False

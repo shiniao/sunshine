@@ -16,12 +16,13 @@ Including another URLconf
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
-from rest_framework_jwt.views import obtain_jwt_token
-from todos.auth import sign
+
 from server import settings
+from todos import auth
 
 urlpatterns = [
                   path('admin/', admin.site.urls),
-                  path('v1/', include('todos.urls')),
-                  path('token/', sign),
+                  path('api/v1/', include('todos.urls')),
+                  path('auth/login/', auth.login),
+
               ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

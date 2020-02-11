@@ -1,114 +1,82 @@
-from rest_framework import status
-from rest_framework.decorators import api_view
-from rest_framework.pagination import PageNumberPagination
-from rest_framework.response import Response
-from rest_framework.reverse import reverse
+import json
 
-from todos import auth
+from django.contrib.auth.models import User
+from django.core.paginator import Paginator
+from django.forms.models import model_to_dict
+from django.views.decorators.http import require_http_methods
+
 from todos.models import Todo
-from todos.serializers import TodoSerializer
+from .auth import auth_required, parser
+from .utils import my_response
 
 
 # There is views.
 
-@api_view(['GET'])
-def index(request):
-    return Response({
-        'todos': reverse('todo_list', request=request)
-    })
 
-
-@api_view(['GET', 'POST'])
-def todos_list(request):
-    """get all todos."""
-
-    owner = auth.parser(request)
-
+@auth_required
+@require_http_methods(['GET', 'POST'])
+def todo_list(request, user):
     if request.method == 'GET':
-        todos = Todo.objects.all().filter(owner=owner).order_by('-id')
-        serializer = TodoSerializer(todos, many=True)
-        res = {'count': len(todos), 'results': serializer.data}
-        return Response(res)
+        # 获取该用户的所有土豆
+        todo_all = user.todos.all()
 
-    elif request.method == 'POST':
-        serializer = TodoSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(owner=owner)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # TODO 去除今天之前的土豆
 
+        # 每页多少todo，默认5个
+        per_page = request.GET.get('per_page', 5)
+        paginator = Paginator(todo_all, per_page)
+        # 请求页数,默认第一页
+        page_number = request.GET.get('page', 1)
+        page_obj = paginator.get_page(page_number)
 
-@api_view(['GET'])
-def todo_page_list(request, sort):
-    """get todos by pagination"""
+        data = {
+            'count': len(page_obj),
+            'todos': [model_to_dict(page) for page in page_obj]
+        }
+        return my_response(data)
 
-    todos = []
-    owner = auth.parser(request)
+    if request.method == 'POST':
+        # 添加一个土豆
+        todo_new = json.loads(request.body)
+        try:
+            todo = Todo()
+            for k, v in todo_new.items():
+                todo.k = v
 
-    if request.method == 'GET':
-        # sort by priority
-        if sort == 'p':
-            todos = Todo.objects.all().filter(owner=owner, finished=False).order_by('priority', '-id')
-        # sort by expired
-        elif sort == 'e':
-            todos = Todo.objects.all().filter(owner=owner, finished=False).order_by('-expired', '-id')
-        # default sort
-        elif sort == 'd':
-            todos = Todo.objects.all().filter(owner=owner, finished=False).order_by('-id')
+            todo.owner = user
+            todo.save()
 
-        # 分页
-        pg = PageNumberPagination()
-        pg_todo = pg.paginate_queryset(queryset=todos, request=request)
-        serializer = TodoSerializer(pg_todo, many=True)
-        return pg.get_paginated_response(serializer.data)
+        except Exception as e:
+            return my_response(message='Database error', code=400)
+
+        return my_response('Create success')
 
 
-@api_view(['GET'])
-def todo_finished_list(request):
-    """
-    get all finished todos.
-    """
-
-    owner = auth.parser(request)
-
-    if request.method == 'GET':
-        todos = Todo.objects.all().filter(owner=owner, finished=True).order_by('-id')
-        serializer = TodoSerializer(todos, many=True)
-        res = {'count': len(todos), 'results': serializer.data}
-        return Response(res)
-
-
-@api_view(['GET', 'PUT', 'DELETE'])
-def todo_detail(request, id):
-    """single todos: get or put or delete."""
-
-    owner = auth.parser(request)
+@require_http_methods(['GET', 'PUT', 'DELETE'])
+def todo_detail(request, id, user):
+    # 获取用户的todo信息
     try:
-        todo = Todo.objects.get(id=id)
+        todo = user.todos.get(id=id)
     except Todo.DoesNotExist:
-        return Response({'message': 'This todo not exist'}, status=status.HTTP_404_NOT_FOUND)
-
-    # todos not belong to owner
-    if todo.owner != owner:
-        return Response({'message': 'This todo not exist'}, status=status.HTTP_404_NOT_FOUND)
+        return my_response(message='Todo does not exist', code=400)
 
     if request.method == 'GET':
-        serializer = TodoSerializer(todo)
-        return Response(serializer.data)
+        return my_response(model_to_dict(todo))
 
     elif request.method == 'PUT':
-        serializer = TodoSerializer(todo, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # 解析请求的json数据
+        todo_new = json.loads(request.body)
+        for k, v in todo_new.items():
+            # 不允许修改创建时间和拥有者
+            if k == 'created':
+                return my_response(message='Created field forbidden change', code=403)
+            if k == 'owner':
+                return my_response(message='Owner field forbidden change', code=403)
+
+            todo.k = v
+
+        todo.save()
+        return my_response('Success update')
 
     elif request.method == 'DELETE':
         todo.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-@api_view(['POST'])
-def register(request):
-    """user register"""
-    pass

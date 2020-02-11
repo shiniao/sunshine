@@ -17,6 +17,14 @@ So, have fun !
 - support todo tags.
 
 
+## API
+```
+/api/v1/
+    todos/
+    todo/<int:id>/
+```
+
+
 ## Deploy
 If you want to run the sunshine application in location, there are some suggestion:
 ```
