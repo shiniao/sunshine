@@ -19,6 +19,7 @@ from django.urls import path, include
 
 from server import settings
 from todos import auth
+from todos.utils import http_not_found, http_not_allowed
 
 urlpatterns = [
                   path('admin/', admin.site.urls),
@@ -26,3 +27,6 @@ urlpatterns = [
                   path('auth/login/', auth.login),
 
               ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+# 接管http状态
+handler404 = http_not_found

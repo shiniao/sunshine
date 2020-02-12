@@ -19,9 +19,10 @@ So, have fun !
 
 ## API
 ```
+/auth/login/
 /api/v1/
     todos/
-    todo/<int:id>/
+    todos/<str:uuid>/
 ```
 
 

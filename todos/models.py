@@ -30,9 +30,11 @@ class Todo(models.Model):
     def __str__(self):
         return self.title
 
-    def is_today(self):
-        """判断土豆是否过期， 如果不是当天创建的则过期"""
-        return (timezone.now().day - self.created.day) == 0
+    def is_past(self):
+        """判断土豆是否过期， 今天之前的全部过期，不显示"""
+        if self.expired is None:
+            return False
+        return (self.expired.day - timezone.now().day) < 0
 
     class Meta:
         # 排序
