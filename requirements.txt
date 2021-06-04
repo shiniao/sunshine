@@ -1,2 +1,2 @@
-django==2.2.7
+django==2.2.21
 pyjwt==1.7.1
